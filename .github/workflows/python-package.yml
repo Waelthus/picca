@@ -4,10 +4,10 @@
 name: Pytest and Coverage
 
 on:
-  push:
-    branches: [ new_testing ]
-  pull_request:
-    branches: [ new_testing ]
+  [push, pull_request]
+  #  branches: [ new_testing ]
+  #pull_request:
+  #  branches: [ new_testing ]
 
 jobs:
   build:
