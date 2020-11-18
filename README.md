@@ -1,3 +1,5 @@
+[![Coverage Status](https://coveralls.io/repos/github/Waelthus/picca/badge.svg?branch=new_testing)](https://coveralls.io/github/Waelthus/picca?branch=new_testing)
+
 # picca
 
 Package for Igm Cosmological-Correlations Analyses.
