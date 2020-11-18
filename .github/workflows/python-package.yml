@@ -16,7 +16,6 @@ jobs:
     strategy:
       matrix:
         python-version: [3.8]
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -40,8 +39,8 @@ jobs:
     - name: Test with pytest including coverage
       run: |
         pytest py/picca/test --capture=tee-sys --cov=picca --cov=picca_bin --cov-report term-missing
-    - env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Send to coveralls
       run: |
         coveralls
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
