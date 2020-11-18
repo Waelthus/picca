@@ -4,6 +4,7 @@ import scipy as sp
 import scipy.interpolate
 import sys
 
+from picca.utils import userprint
 from picca.fitter import myGamma
 from picca.fitter import utils
 from . import fftlog
@@ -51,8 +52,8 @@ class model:
         if self.fix_bias_beta_peak:
             self.bias_lya_peak=dic_init['bias_lya_peak']
             self.beta_lya_peak=dic_init['beta_lya_peak']
-            print("Fixing for BAO peak bias=",self.bias_lya_peak)
-            print("Fixing for BAO peak beta=",self.beta_lya_peak)
+            userprint("Fixing for BAO peak bias=",self.bias_lya_peak)
+            userprint("Fixing for BAO peak beta=",self.beta_lya_peak)
 
         self.pall = self.pglob[:]
 
@@ -76,10 +77,10 @@ class model:
         self.bv_dnl = None
         self.kp_dnl = None
         if dic_init['dnl_model'] == "mcdonald":
-            print("with DNL (McDonald 2003)")
+            userprint("with DNL (McDonald 2003)")
             self.dnl_model = "mcdonald"
         elif dic_init['dnl_model'] == "arinyo":
-            print("with DNL (Arinyo et al. 2015)")
+            userprint("with DNL (Arinyo et al. 2015)")
             self.dnl_model = "arinyo"
             z_dnl = [2.2000, 2.4000, 2.6000, 2.8000, 3.0000]
             q1_dnl = [0.8670, 0.8510, 0.7810, 0.7730, 0.7920]
@@ -97,21 +98,21 @@ class model:
             self.av_dnl = av_dnl_interp(self.zref)
             self.bv_dnl = bv_dnl_interp(self.zref)
             self.kp_dnl = kp_dnl_interp(self.zref)
-            print("q1 =", self.q1_dnl)
-            print("kv =", self.kv_dnl)
-            print("av =", self.av_dnl)
-            print("bv =", self.bv_dnl)
-            print("kp =", self.kp_dnl)
+            userprint("q1 =", self.q1_dnl)
+            userprint("kv =", self.kv_dnl)
+            userprint("av =", self.av_dnl)
+            userprint("bv =", self.bv_dnl)
+            userprint("kp =", self.kp_dnl)
         elif (not dic_init['dnl_model'] is None) & (not dic_init['dnl_model'] == "mcdonald") & (not dic_init['dnl_model'] == "arinyo"):
-            print('  Unknown dnl model: ', dic_init['dnl_model'])
-            print('  Exit')
+            userprint('  Unknown dnl model: ', dic_init['dnl_model'])
+            userprint('  Exit')
             sys.exit(0)
         else :
-            print("without DNL")
+            userprint("without DNL")
 
         self.twod = dic_init['2d']
         if self.twod :
-            print("initalize pk2D array for 2D transfo ...")
+            userprint("initalize pk2D array for 2D transfo ...")
             kmin=1.e-7
             kmax=100.
             nk  = 1024
@@ -124,7 +125,7 @@ class model:
             self.pk_2d=fftlog.extrapolate_pk_logspace(kk.ravel(),self.k,self.pk).reshape(kk.shape)
             self.pkSB_2d=fftlog.extrapolate_pk_logspace(kk.ravel(),self.k,self.pkSB).reshape(kk.shape)
             self.k=kk
-            print("done")
+            userprint("done")
 
     def add_cross(self,dic_init):
 
@@ -190,12 +191,12 @@ class model:
         dnl = 1
         if model == "mcdonald":
             kvel = 1.22*(1+k/0.923)**0.451
-            dnl = sp.exp((k/6.4)**0.569-(k/15.3)**2.01-(k*muk/kvel)**1.5)
+            dnl = np.exp((k/6.4)**0.569-(k/15.3)**2.01-(k*muk/kvel)**1.5)
         elif model == "arinyo":
-            growth = q1*k*k*k*pk/(2*sp.pi*sp.pi)
-            pecvelocity = np.power(k/kv,av)*np.power(sp.fabs(muk),bv)
+            growth = q1*k*k*k*pk/(2*np.pi*np.pi)
+            pecvelocity = np.power(k/kv,av)*np.power(np.fabs(muk),bv)
             pressure = (k/kp)*(k/kp)
-            dnl = sp.exp(growth*(1-pecvelocity)-pressure)
+            dnl = np.exp(growth*(1-pecvelocity)-pressure)
         return dnl
 
     def valueAuto(self,rp,rt,z,pars):
@@ -247,7 +248,7 @@ class model:
             bias_gamma = pars["bias_gamma"]
             bias_prim = pars["bias_prim"]
             lambda_uv = pars["lambda_uv"]
-            W = sp.arctan(k*lambda_uv)/(k*lambda_uv)
+            W = np.arctan(k*lambda_uv)/(k*lambda_uv)
             bias_lya_prim = bias_lya + bias_gamma*W/(1+bias_prim*W)
             beta_lya = bias_lya*beta_lya/bias_lya_prim
             bias_lya = bias_lya_prim
@@ -256,7 +257,7 @@ class model:
             bias_lls = pars["bias_lls"]
             beta_lls = pars["beta_lls"]
             L0_lls = pars["L0_lls"]
-            F_lls = sp.sinc(kp*L0_lls/sp.pi)
+            F_lls = np.sinc(kp*L0_lls/np.pi)
             beta_lya = (bias_lya*beta_lya + bias_lls*beta_lls*F_lls)/(bias_lya+bias_lls*F_lls)
             bias_lya = bias_lya + bias_lls*F_lls
 
@@ -264,14 +265,14 @@ class model:
 
         Lpar=pars["Lpar_auto"]
         Lper=pars["Lper_auto"]
-        Gpar = sp.sinc(kp*Lpar/2/sp.pi)
-        Gper = sp.sinc(kt*Lper/2/sp.pi)
+        Gpar = np.sinc(kp*Lpar/2/np.pi)
+        Gper = np.sinc(kt*Lper/2/np.pi)
         pk_full*=Gpar**2
         pk_full*=Gper**2
 
         sigmaNLper = pars["SigmaNL_perp"]
         sigmaNLpar = sigmaNLper*pars["1+f"]
-        pk_nl = sp.exp(-(kp*sigmaNLpar)**2/2-(kt*sigmaNLper)**2/2)
+        pk_nl = np.exp(-(kp*sigmaNLpar)**2/2-(kt*sigmaNLper)**2/2)
         pk_full *= pk_nl
         pk_full *= self.DNL(k,muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,self.dnl_model)
 
@@ -300,7 +301,7 @@ class model:
             bias_gamma = pars["bias_gamma"]
             bias_prim = pars["bias_prim"]
             lambda_uv = pars["lambda_uv"]
-            W = sp.arctan(self.k*lambda_uv)/(self.k*lambda_uv)
+            W = np.arctan(self.k*lambda_uv)/(self.k*lambda_uv)
             bias_lya_prim = bias_lya + bias_gamma*W/(1+bias_prim*W)
             beta_lya = bias_lya*beta_lya/bias_lya_prim
             bias_lya = bias_lya_prim
@@ -309,20 +310,20 @@ class model:
             bias_lls = pars["bias_lls"]
             beta_lls = pars["beta_lls"]
             L0_lls = pars["L0_lls"]
-            F_lls = sp.sinc(self.kp*L0_lls/sp.pi)
+            F_lls = np.sinc(self.kp*L0_lls/np.pi)
             beta_lya = (bias_lya*beta_lya + bias_lls*beta_lls*F_lls)/(bias_lya+bias_lls*F_lls)
             bias_lya = bias_lya + bias_lls*F_lls
 
         sigmaNLper = pars["SigmaNL_perp"]
         sigmaNLpar = sigmaNLper*pars["1+f"]
 
-        pk_full = pk2d * sp.exp(-(sigmaNLper**2*self.kt**2 + sigmaNLpar**2*self.kp**2)/2)
+        pk_full = pk2d * np.exp(-(sigmaNLper**2*self.kt**2 + sigmaNLpar**2*self.kp**2)/2)
         pk_full =pk_full * (1+beta_lya*self.muk**2)**2*bias_lya**2
 
         Lpar=pars["Lpar_auto"]
         Lper=pars["Lper_auto"]
-        pk_full *= sp.sinc(self.kp*Lpar/2/sp.pi)**2
-        pk_full *= sp.sinc(self.kt*Lper/2/sp.pi)**2
+        pk_full *= np.sinc(self.kp*Lpar/2/np.pi)**2
+        pk_full *= np.sinc(self.kt*Lper/2/np.pi)**2
         pk_full *= self.DNL(self.k,self.muk,self.pk_2d,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,self.dnl_model)
 
         evol  = self.evolution_Lya_bias(z,[pars["alpha_lya"]])*self.evolution_growth_factor(z)
@@ -386,7 +387,7 @@ class model:
             bias_gamma    = pars["bias_gamma"]
             bias_prim     = pars["bias_prim"]
             lambda_uv     = pars["lambda_uv"]
-            W             = sp.arctan(k*lambda_uv)/(k*lambda_uv)
+            W             = np.arctan(k*lambda_uv)/(k*lambda_uv)
             bias_lya_prim = bias_lya + bias_gamma*W/(1+bias_prim*W)
             beta_lya      = bias_lya*beta_lya/bias_lya_prim
             bias_lya      = bias_lya_prim
@@ -401,23 +402,23 @@ class model:
             bias_lls = pars["bias_lls"]
             beta_lls = pars["beta_lls"]
             L0_lls = pars["L0_lls"]
-            F_lls = sp.sinc(kp*L0_lls/sp.pi)
+            F_lls = np.sinc(kp*L0_lls/np.pi)
             pk_full+=bias_lls*F_lls*bias_qso*(1+beta_lls*muk**2)*(1+beta_qso*muk**2)*pk_lin
 
         ### Velocity dispersion
         if (self.velo_gauss):
-            pk_full *= sp.exp( -0.25*(kp*pars['sigma_velo_gauss'])**2 )
+            pk_full *= np.exp( -0.25*(kp*pars['sigma_velo_gauss'])**2 )
         if (self.velo_lorentz):
             pk_full /= np.sqrt(1.+(kp*pars['sigma_velo_lorentz'])**2)
 
         ### Peak broadening
         sigmaNLper = pars["SigmaNL_perp"]
         sigmaNLpar = sigmaNLper*pars["1+f"]
-        pk_full   *= sp.exp( -0.5*( (sigmaNLper*kt)**2 + (sigmaNLpar*kp)**2 ) )
+        pk_full   *= np.exp( -0.5*( (sigmaNLper*kt)**2 + (sigmaNLpar*kp)**2 ) )
 
         ### Pixel size
-        pk_full *= sp.sinc(kp*Lpar/2./sp.pi)**2
-        pk_full *= sp.sinc(kt*Lper/2./sp.pi)**2
+        pk_full *= np.sinc(kp*Lpar/2./np.pi)**2
+        pk_full *= np.sinc(kt*Lper/2./np.pi)**2
 
         ### Non-linear correction
         pk_full *= np.sqrt(self.DNL(self.k,self.muk,self.pk,self.q1_dnl,self.kv_dnl,self.av_dnl,self.bv_dnl,self.kp_dnl,self.dnl_model))
@@ -471,20 +472,20 @@ class model:
 
         ### Velocity dispersion
         if (self.velo_gauss):
-            pk_full *= sp.exp( -0.5*(kp*pars['sigma_velo_gauss'])**2 )
+            pk_full *= np.exp( -0.5*(kp*pars['sigma_velo_gauss'])**2 )
         if (self.velo_lorentz):
             pk_full /= 1.+(kp*pars['sigma_velo_lorentz'])**2
 
         ### Peak broadening
         sigmaNLper = pars["SigmaNL_perp"]
         sigmaNLpar = sigmaNLper*pars["1+f"]
-        pk_full   *= sp.exp( -0.5*( (sigmaNLper*kt)**2 + (sigmaNLpar*kp)**2 ) )
+        pk_full   *= np.exp( -0.5*( (sigmaNLper*kt)**2 + (sigmaNLpar*kp)**2 ) )
 
         ### Pixel size
         Lpar     = pars["Lpar_autoQSO"]
         Lper     = pars["Lper_autoQSO"]
-        pk_full *= sp.sinc(kp*Lpar/2./sp.pi)**2
-        pk_full *= sp.sinc(kt*Lper/2./sp.pi)**2
+        pk_full *= np.sinc(kp*Lpar/2./np.pi)**2
+        pk_full *= np.sinc(kt*Lper/2./np.pi)**2
 
         ### Redshift evolution
         qso_evol = [pars['qso_evol_0'],pars['qso_evol_1']]
@@ -510,9 +511,9 @@ class model:
 
         N=len(k)
         emm=N*np.fft.fftfreq(N)
-        r=r0*sp.exp(-emm*l/N)
+        r=r0*np.exp(-emm*l/N)
         dr=abs(np.log(r[1]/r[0]))
-        s=sp.argsort(r)
+        s=np.argsort(r)
         r=r[s]
 
         xi=np.zeros([ell_max//2+1,len(ar)])
@@ -522,20 +523,20 @@ class model:
             mu=ell+0.5
             n=2.
             q=2-n-0.5
-            x=q+2*sp.pi*1j*emm/l
+            x=q+2*np.pi*1j*emm/l
             lg1=myGamma.LogGammaLanczos((mu+1+x)/2)
             lg2=myGamma.LogGammaLanczos((mu+1-x)/2)
 
-            um=(k0*r0)**(-2*sp.pi*1j*emm/l)*2**x*sp.exp(lg1-lg2)
-            um[0]=sp.real(um[0])
-            an=np.fft.fft(pk_ell*k**n/2/sp.pi**2*np.sqrt(sp.pi/2))
+            um=(k0*r0)**(-2*np.pi*1j*emm/l)*2**x*np.exp(lg1-lg2)
+            um[0]=np.real(um[0])
+            an=np.fft.fft(pk_ell*k**n/2/np.pi**2*np.sqrt(np.pi/2))
             an*=um
             xi_loc=np.fft.ifft(an)
             xi_loc=xi_loc[s]
             xi_loc/=r**(3-n)
             xi_loc[-1]=0
-            spline=sp.interpolate.splrep(np.log(r)-dr/2,sp.real(xi_loc),k=3,s=0)
-            xi[ell//2,:]=sp.interpolate.splev(np.log(ar),spline)
+            spline=np.interpolate.splrep(np.log(r)-dr/2,np.real(xi_loc),k=3,s=0)
+            xi[ell//2,:]=np.interpolate.splev(np.log(ar),spline)
 
         return xi
 

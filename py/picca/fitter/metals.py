@@ -1,8 +1,8 @@
 import numpy as np
-import scipy as sp
 import fitsio
 import sys
 
+from picca.utils import userprint
 from picca.fitter import utils
 from picca.fitter.cosmo import model as cosmo_model
 
@@ -54,7 +54,7 @@ class model:
         met_names = self.met_names
 
         if self.templates:
-            to = sp.loadtxt(met_prefix+"_Lya_"+met_names[0]+".0.dat")
+            to = np.loadtxt(met_prefix+"_Lya_"+met_names[0]+".0.dat")
             nd = len(to[:,0])
 
             self.temp_lya_met=np.zeros([nd,nmet,3])
@@ -63,14 +63,14 @@ class model:
             for i in range(nmet):
                 for mp in range(3):
                     fmet=met_prefix+"_Lya_"+met_names[i]+"."+str(2*mp)+".dat"
-                    print("reading "+fmet)
-                    to=sp.loadtxt(fmet)
+                    userprint("reading "+fmet)
+                    to=np.loadtxt(fmet)
                     self.temp_lya_met[to[:,0].astype(int),i,mp]=to[:,1]
 
                     for j in range(i,nmet):
                         fmet=met_prefix+"_"+met_names[i]+"_"+met_names[j]+"."+str(2*mp)+".dat"
-                        print("reading "+fmet)
-                        to=sp.loadtxt(fmet)
+                        userprint("reading "+fmet)
+                        to=np.loadtxt(fmet)
                         self.temp_met_met[to[:,0].astype(int),i,j,mp]=to[:,1]
         else:
             h = fitsio.FITS(met_prefix)
@@ -116,7 +116,7 @@ class model:
         self.different_drp = dic_init['different_drp']
         if (self.different_drp):
             if not self.grid:
-                print("different drp and metal matrix not implemented")
+                userprint("different drp and metal matrix not implemented")
                 sys.exit(1)
             for name in self.met_names:
                 self.pname.append("drp_"+name)
@@ -128,21 +128,21 @@ class model:
 
         if self.grid:
 
-            to = sp.loadtxt(met_prefix + '_QSO_' + met_names[0] + '.grid')
+            to = np.loadtxt(met_prefix + '_QSO_' + met_names[0] + '.grid')
             self.nd_cross = to[:,0].size
 
             ### Get the grid of the metals
             self.grid_qso_met=np.zeros([self.nd_cross,nmet,3])
             for i in range(nmet):
                 fmet = met_prefix + '_QSO_' + met_names[i] + '.grid'
-                print('  Reading cross correlation metal grid : ')
-                print('  ', fmet)
-                to = sp.loadtxt(fmet)
+                userprint('  Reading cross correlation metal grid : ')
+                userprint('  ', fmet)
+                to = np.loadtxt(fmet)
                 idx = to[:,0].astype(int)
                 self.grid_qso_met[idx,i,0] = to[:,1]
                 self.grid_qso_met[idx,i,1] = to[:,2]
                 self.grid_qso_met[idx,i,2] = to[:,3]
-            print()
+            userprint()
         else:
             h = fitsio.FITS(self.met_prefix)
             self.abs_igm_cross = [i.strip() for i in h[1]["ABS_IGM"][:]]
@@ -206,14 +206,14 @@ class model:
                 bias_lls = pars["bias_lls"]
                 beta_lls = pars["beta_lls"]
                 L0_lls = pars["L0_lls"]
-                Flls = sp.sin(kp*L0_lls)/(kp*L0_lls)
+                Flls = np.sin(kp*L0_lls)/(kp*L0_lls)
 
             Lpar_auto = pars["Lpar_auto"]
             Lper_auto = pars["Lper_auto"]
             alpha_lya = pars["alpha_lya"]
 
-            Gpar = sp.sinc(kp*Lpar_auto/2/sp.pi)**2
-            Gper = sp.sinc(kt*Lper_auto/2/sp.pi)**2
+            Gpar = np.sinc(kp*Lpar_auto/2/np.pi)**2
+            Gper = np.sinc(kt*Lper_auto/2/np.pi)**2
 
             xi_lya_met = np.zeros(nbins)
             for met in self.met_names:
@@ -236,7 +236,7 @@ class model:
 
                 if recalc:
                     if self.verbose:
-                        print("recalculating ",met)
+                        userprint("recalculating ",met)
                     pk  = (1+beta_lya*muk**2)*(1+beta_met*muk**2)*self.pk
                     pk *= Gpar*Gper
                     xi = cosmo_model.Pk2Xi(r,mur,self.k,pk,ell_max=self.ell_max)
@@ -306,7 +306,7 @@ class model:
         ### Scales
         if (self.different_drp):
             drp_met = np.array([pars['drp_'+met]  for met in self.met_names])
-            drp     = sp.outer(np.ones(self.nd_cross),drp_met)
+            drp     = np.outer(np.ones(self.nd_cross),drp_met)
         else:
             drp = pars["drp"]
 
@@ -330,8 +330,8 @@ class model:
 
         ### Correction to linear power-spectrum
         pk_corr = (1.+0.*muk)*self.pk
-        pk_corr *= sp.sinc(kp*Lpar/2./sp.pi)**2
-        pk_corr *= sp.sinc(kt*Lper/2./sp.pi)**2
+        pk_corr *= np.sinc(kp*Lpar/2./np.pi)**2
+        pk_corr *= np.sinc(kt*Lper/2./np.pi)**2
 
         ### Biases
         b1b2 = qso_boost*bias_qso*bias_met
@@ -355,7 +355,7 @@ class model:
                     self.prev_pmet['drp'] != drp
                 if recalc:
                     if self.verbose:
-                        print("recalculating metal {}".format(i))
+                        userprint("recalculating metal {}".format(i))
                     self.prev_pmet['beta_'+i] = beta_met
                     self.prev_pmet['growth_rate'] = growth_rate
                     self.prev_pmet['qso_evol'] = qso_evol
@@ -379,23 +379,3 @@ class model:
                 xi_qso_met += qso_boost*bias_qso*bias_met*self.prev_xi_qso_met[i]
 
         return xi_qso_met
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,8 +1,9 @@
 import numpy as np
-import scipy as sp
 from . import utils
 from scipy.integrate import quad
 from scipy.interpolate import interp1d
+
+from picca.utils import userprint
 
 def xi(r, mu, k, pk_lin, pk_func, tracer1=None, tracer2=None, ell_max=None, **pars):
     pk_full = pk_func(k, pk_lin, tracer1, tracer2, **pars)
@@ -122,7 +123,7 @@ def xi_qso_radiation(r, mu, tracer1, tracer2, **pars):
 
     xi_rad = pars["qso_rad_strength"]/(r_shift**2.)
     xi_rad *= 1.-pars["qso_rad_asymmetry"]*(1.-mu_shift**2.)
-    xi_rad *= sp.exp(-r_shift*( (1.+mu_shift)/pars["qso_rad_lifetime"] + 1./pars["qso_rad_decrease"]) )
+    xi_rad *= np.exp(-r_shift*( (1.+mu_shift)/pars["qso_rad_lifetime"] + 1./pars["qso_rad_decrease"]) )
 
     return xi_rad
 
@@ -220,7 +221,7 @@ def cached_growth_factor_de(z, zref=None, Om=None, OL=None, **kwargs):
     '''
     Implements eq. 7.77 from S. Dodelson's Modern Cosmology book
     '''
-    print('Calculating growth factor for Om = {}, OL = {}'.format(Om, OL))
+    userprint('Calculating growth factor for Om = {}, OL = {}'.format(Om, OL))
 
     def hubble(z, Om, OL):
         return np.sqrt(Om*(1+z)**3 + OL + (1-Om-OL)*(1+z)**2)
@@ -272,7 +273,7 @@ def broadband_sky(r, mu, name=None, bin_size_rp=None, *pars, **kwargs):
 
     rp = r*mu
     rt = r*np.sqrt(1-mu**2)
-    cor = kwargs[name+'-scale-sky']/(kwargs[name+'-sigma-sky']*np.sqrt(2.*sp.pi))*sp.exp(-0.5*(rt/kwargs[name+'-sigma-sky'])**2)
+    cor = kwargs[name+'-scale-sky']/(kwargs[name+'-sigma-sky']*np.sqrt(2.*np.pi))*np.exp(-0.5*(rt/kwargs[name+'-sigma-sky'])**2)
     w = (rp>=0.) & (rp<bin_size_rp)
     cor[~w] = 0.
 
